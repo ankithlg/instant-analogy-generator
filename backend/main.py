@@ -272,3 +272,13 @@ async def generate_quiz(req: QuizRequest, current_user: dict = Depends(get_curre
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+if __name__ == "__main__":
+    import os
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",                  # required for server deployment
+        port=int(os.environ.get("PORT", 8000)),  # use dynamic port or fallback to 8000 locally
+        reload=True                        # optional, auto-reload for local dev
+    ) 
