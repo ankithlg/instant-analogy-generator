@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz - Instant Analogy Generator</title>
+  <link rel="stylesheet" href="quiz.css">
+</head>
+
+<body>
+  <h2>Quiz: Instant Analogy Generator</h2>
+
+  <div id="quiz-container">
+    <div id="questions"></div>
+
+    <button id="submit-btn">Submit Answers</button>
+    <button id="retry-btn" style="display:none;">Retry Quiz</button>
+    <button id="home-btn" style="display:none;">Back to Main</button>
+
+    <div id="result" style="display:none;"></div>
+  </div>
+
+  <script>
+    const API = "http://127.0.0.1:8000";
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location = "login.html";
+    }
+
+    let quizData = {};
+
+    async function loadQuiz() {
+      const lastAnalogy = JSON.parse(localStorage.getItem("lastAnalogy"));
+      if (!lastAnalogy) {
+        alert("No analogy found. Please generate an analogy first.");
+        window.location = "index.html";
+        return;
+      }
+
+      const concept = lastAnalogy.concept;
+      const result = lastAnalogy.result;
+
+      try {
+        const res = await fetch(`${API}/quiz`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ concept, result })
+        });
+
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+        quizData = await res.json();
+        renderQuestions();
+
+      } catch (err) {
+        alert("Error loading quiz: " + err);
+        console.error(err);
+      }
+    }
+
+    function renderQuestions() {
+      const container = document.getElementById("questions");
+      container.innerHTML = "";
+
+      quizData.questions.forEach((q, idx) => {
+        const div = document.createElement("div");
+        div.className = "question-block";
+
+        div.innerHTML = `<p>${idx + 1}. ${q.question}</p>`;
+        q.options.forEach(opt => {
+          div.innerHTML += `<label><input type="radio" name="q${idx}" value="${opt}"> ${opt}</label>`;
+        });
+
+        container.appendChild(div);
+      });
+    }
+
+    document.getElementById("submit-btn").addEventListener("click", () => {
+  let score = 0;
+  quizData.questions.forEach((q, idx) => {
+    const selected = document.querySelector(`input[name="q${idx}"]:checked`);
+    if (selected && selected.value === q.answer) score++;
+  });
+
+  const resultDiv = document.getElementById("result");
+  resultDiv.style.display = "block";
+
+  // Show score
+  resultDiv.innerHTML = `<h3>Your Score: ${score}/${quizData.questions.length}</h3>`;
+
+  // Show questions with answers
+  quizData.questions.forEach((q, idx) => {
+    resultDiv.innerHTML += `
+      <p><b>Q${idx + 1}:</b> ${q.question}</p>
+      <p style="color:#4caf50; margin-left:15px;">✔ Correct Answer: ${q.answer}</p>
+    `;
+  });
+
+  document.getElementById("submit-btn").style.display = "none";
+  document.getElementById("retry-btn").style.display = "inline-block";
+  document.getElementById("home-btn").style.display = "inline-block";
+});
+
+
+    document.getElementById("retry-btn").addEventListener("click", () => {
+      document.getElementById("result").style.display = "none";
+      document.getElementById("submit-btn").style.display = "inline-block";
+      document.getElementById("retry-btn").style.display = "none";
+      document.getElementById("home-btn").style.display = "none";
+      renderQuestions();
+    });
+
+    document.getElementById("home-btn").addEventListener("click", () => {
+      window.location = "index.html";
+    });
+
+    window.onload = loadQuiz;
+  </script>
+</body>
+
+</html>

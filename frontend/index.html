@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Instant Analogy Generator</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+
+  <div class="top-bar">
+    <h1>Instant Analogy Generator</h1>
+    <div class="actions">
+      <button onclick="goHistory()">History</button>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <input id="concept" placeholder="Enter a concept">
+    <select id="level">
+      <option value="beginner">Beginner</option>
+      <option value="intermediate">Intermediate</option>
+      <option value="expert">Expert</option>
+    </select>
+    <button class="generate-btn" onclick="generate()">Generate</button>
+
+    <div id="output" class="output-box" style="position: relative; min-height: 100px;"></div>
+    <div id="spinner" class="dots-spinner" style="display:none;">
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+
+    <!-- Quiz button hidden by default -->
+    <button id="quizBtn" style="display:none; margin-top: 10px;" onclick="startQuiz()">▶ Start Quiz</button>
+  </div>
+
+  <script>
+    const API = "http://127.0.0.1:8000";
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location = "login.html";
+    }
+
+    async function verifyToken() {
+      try {
+        const res = await fetch(`${API}/history`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error("Invalid token");
+      } catch (e) {
+        localStorage.removeItem("token");
+        window.location = "login.html";
+      }
+    }
+    verifyToken();
+
+    function logout() {
+      localStorage.removeItem("token");
+      window.location = "login.html";
+    }
+
+    function goHistory() {
+      window.location = "history.html";
+    }
+
+    function startQuiz() {
+      window.location = "quiz.html";
+    }
+
+    async function generate() {
+      const concept = document.getElementById("concept").value.trim();
+      const level = document.getElementById("level").value;
+      const outputDiv = document.getElementById("output");
+      const spinner = document.getElementById("spinner");
+      const quizBtn = document.getElementById("quizBtn");
+
+      if (!concept) {
+        outputDiv.innerHTML = "<b>Please enter a concept.</b>";
+        return;
+      }
+
+      spinner.style.display = "flex";
+      quizBtn.style.display = "none"; // hide quiz button until generation completes
+
+      try {
+        const res = await fetch(`${API}/generate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ concept, level })
+        });
+
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+        const data = await res.json();
+        const result = data.result || {};
+
+        const tagline = result?.tagline || "";
+        const analogy = result?.analogy || result?.raw || "";
+        const mapping = result?.mapping || [];
+        const limitations = result?.limitations || [];
+
+        const mappingHtml = mapping.map(m => {
+          if (typeof m === "string") {
+            const parts = m.split("->").map(s => s.trim());
+            return `<li>${parts[0]} &rarr; ${parts[1] || ""}</li>`;
+          } else {
+            return `<li>${m.technical} &rarr; ${m["real-world"]}</li>`;
+          }
+        }).join("");
+
+        const limitationsHtml = limitations.map(l => `<li>${l}</li>`).join("");
+
+        outputDiv.innerHTML = `
+          <h3>Tagline</h3>
+          <p>${tagline}</p>
+          <h3>Analogy</h3>
+          <p>${analogy}</p>
+          <h3>Mapping</h3>
+          <ul>${mappingHtml}</ul>
+          <h3>Limitations</h3>
+          <ul>${limitationsHtml}</ul>
+          <button id="copyBtn">📋 Copy Analogy</button>
+        `;
+
+        document.getElementById("copyBtn").addEventListener("click", () => {
+          const textToCopy = `
+Tagline: ${tagline}
+Analogy: ${analogy}
+Mapping: ${mapping.map(m => `${m.technical} → ${m["real-world"]}`).join(", ")}
+Limitations: ${limitations.join(", ")}
+          `;
+          navigator.clipboard.writeText(textToCopy)
+            .then(() => alert("✅ Analogy copied to clipboard"))
+            .catch(err => alert("❌ Failed to copy: " + err));
+        });
+
+        // Save last analogy in localStorage for quiz
+        localStorage.setItem("lastAnalogy", JSON.stringify({
+          concept: concept,
+          result: result
+        }));
+
+        // Show Quiz button
+        quizBtn.style.display = "block";
+
+      } catch (err) {
+        outputDiv.innerHTML = `<b>Error:</b> ${err}`;
+      } finally {
+        spinner.style.display = "none";
+      }
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.pyt
+*.pyo
+*.cover
+*.egg-info/
+pip-wheel-metadata/
+build/
+dist/
+
+# Virtual environments
+venv/
+ENV/
+env/
+.env/
+.venv/
+backend/venv/   # in case your venv is under backend/
+frontend/venv/
+
+# Environment files (secrets)
+.env
+.env.*     # env.local, .env.dev, etc
+
+# IDEs / editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test / coverage
+htmlcov/
+.coverage
+.pytest_cache/
+
+# Logs
+*.log
+
+# Node (frontend, if you ever add node)
+node_modules/
+
+# Docker
+docker-compose.override.yml
+.dockerignore

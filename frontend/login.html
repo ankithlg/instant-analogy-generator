@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Login – Instant Analogy Generator</title>
+  <link rel="stylesheet" href="login.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Login / Sign-up</h1>
+
+    <input id="username" placeholder="Username (for sign-up)">
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password" maxlength="72">
+
+    <button onclick="signup()">Sign Up</button>
+    <button onclick="login()">Log In</button>
+    <div id="msg"></div>
+  </div>
+
+<script>
+const API = "http://127.0.0.1:8000";
+
+function isValidPassword(password){
+  // Regex explanation:
+  // (?=.*[0-9]) -> at least 1 digit
+  // (?=.*[a-z]) -> at least 1 lowercase
+  // (?=.*[A-Z]) -> at least 1 uppercase
+  // (?=.*[@#$%^&+=!]) -> at least 1 special character
+  // .{8,} -> minimum 8 characters
+  const re = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$/;
+  return re.test(password);
+}
+
+async function signup(){
+  const username=document.getElementById("username").value.trim();
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value;
+
+  if(!isValidPassword(password)){
+    document.getElementById("msg").textContent = "Password must be ≥8 chars, include 1 uppercase, 1 lowercase, 1 number, 1 special character (@#$%^&+=!)";
+    return;
+  }  
+
+  try{
+    const r=await fetch(`${API}/signup`,{
+      method:"POST",
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username,email,password})
+    });
+    if(!r.ok) throw new Error((await r.json()).detail);
+    document.getElementById("msg").textContent="✅ Sign-up successful, you can log in.";
+    document.getElementById("msg").style.color="#4caf50";
+  }catch(e){ document.getElementById("msg").textContent=e; }
+}
+
+async function login(){
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value;
+  try{
+    const r=await fetch(`${API}/login`,{
+      method:"POST",
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password})
+    });
+    if(!r.ok) throw new Error((await r.json()).detail);
+    const data=await r.json();
+    localStorage.setItem("token", data.access_token);
+    window.location="index.html";
+  }catch(e){ document.getElementById("msg").textContent=e; }
+}
+</script>
+</body>
+</html>
