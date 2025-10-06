@@ -8,10 +8,10 @@ from openai import OpenAI
 from datetime import datetime
 from bson import ObjectId
 
-from .auth import create_user, authenticate_user
-from .models import UserCreate, UserLogin
-from .utils import create_access_token, decode_access_token
-from .database import history_collection
+from auth import create_user, authenticate_user
+from models import UserCreate, UserLogin
+from utils import create_access_token, decode_access_token
+from database import history_collection
 
 # Load .env
 load_dotenv()
