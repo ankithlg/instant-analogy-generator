@@ -21,7 +21,16 @@
   </div>
 
   <script>
-    const API = "http://127.0.0.1:8000";
+let API;
+
+if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+  API = "http://127.0.0.1:8000";          // local
+} else if (window.location.hostname.includes("minikube")) {
+  API = "http://backend-service:8000";    // Kubernetes internal service
+} else {
+  API = "http://backend-service:8000";    // default for cluster
+}
+
     const token = localStorage.getItem("token");
     if (!token) {
       window.location = "login.html";

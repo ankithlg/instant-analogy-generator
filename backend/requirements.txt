@@ -34,3 +34,4 @@ tqdm==4.67.1
 typing-inspection==0.4.1
 typing_extensions==4.15.0
 uvicorn==0.37.0
+gunicorn==21.2.0

@@ -14,3 +14,4 @@ users_collection = db["users"]
 
 history_collection = db["search_history"]
 
+
